@@ -2,6 +2,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\User;
+use App\Models\UserLembreteConfig;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
@@ -85,6 +86,12 @@ class AuthController extends Controller
                 // Apenas cliente nasce ativo. Profissional e Estabelecimento dependem de aprovação.
                 'ativo'    => ($request->tipo === 'cliente'),
                 'estabelecimento_id' => $request->estabelecimento_id ?? null,
+            ]);
+
+            // 1.1. Criar configuração de lembrete padrão (1 dia antes = 1440 minutos)
+            UserLembreteConfig::create([
+                'user_id' => $user->id,
+                'minutos_antes' => 1440, // 1 dia
             ]);
 
             // 2. Lógica Específica por Tipo

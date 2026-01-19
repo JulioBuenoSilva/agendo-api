@@ -4,13 +4,21 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AgendamentoController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\EstabelecimentoController;
 use App\Http\Controllers\Api\ServicoController;
 use App\Http\Controllers\Api\HorarioFuncionamentoController;
+use App\Http\Controllers\Api\UserLembreteConfigController;
 
 // Rotas públicas
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/servicos', [ServicoController::class, 'index']);
+
+// Buscar estabelecimento por nome
+Route::get('/estabelecimentos/buscar', [EstabelecimentoController::class, 'buscarPorNome']);
+
+// Detalhes completos do estabelecimento
+Route::get('/estabelecimentos/{id}/detalhes', [EstabelecimentoController::class, 'detalhesCompletos']);
 
 // Rotas protegidas (Só entra com Token Bearer)
 Route::middleware('auth:sanctum')->group(function () {
@@ -22,6 +30,21 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Logout (Revoga o token atual)
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    // --- CONFIGURAÇÕES DE LEMBRETE DO USUÁRIO ---
+    
+    // Obter configuração de lembrete do usuário logado
+    Route::get('/user/lembrete-config', [UserLembreteConfigController::class, 'show']);
+    
+    // Criar ou atualizar configuração de lembrete
+    Route::post('/user/lembrete-config', [UserLembreteConfigController::class, 'store']);
+    
+    // Atualizar configuração de lembrete
+    Route::put('/user/lembrete-config', [UserLembreteConfigController::class, 'update']);
+    Route::patch('/user/lembrete-config', [UserLembreteConfigController::class, 'update']);
+    
+    // Remover configuração de lembrete
+    Route::delete('/user/lembrete-config', [UserLembreteConfigController::class, 'destroy']);
 
     // --- AGENDAMENTOS (CLIENTE/GERAL) ---
     

@@ -55,6 +55,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Configuração de lembrete do usuário.
+     */
+    public function lembreteConfig()
+    {
+        return $this->hasOne(UserLembreteConfig::class);
+    }
+
+    /**
      * Agendamentos como cliente.
      */
     public function consultas()
