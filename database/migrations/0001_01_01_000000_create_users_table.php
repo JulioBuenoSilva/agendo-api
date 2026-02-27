@@ -25,7 +25,7 @@ return new class extends Migration
                 ->constrained('estabelecimentos')
                 ->nullOnDelete();
 
-            $table->timestamp('email_verified_at')->nullable();
+            $table->timestamp('email_verified_at')->nullable();$table->string('foto_path')->nullable();
 
             // 👇 login tradicional ou social
             $table->string('password')->nullable();
@@ -35,7 +35,7 @@ return new class extends Migration
 
             $table->rememberToken();
             $table->timestamps();
-        });
+        }); 
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();

@@ -8,25 +8,44 @@ use App\Http\Controllers\Api\EstabelecimentoController;
 use App\Http\Controllers\Api\ServicoController;
 use App\Http\Controllers\Api\HorarioFuncionamentoController;
 use App\Http\Controllers\Api\UserLembreteConfigController;
+use App\Http\Controllers\Api\PerfilController;
+use App\Http\Controllers\Api\NotificationController;
 
 // Rotas públicas
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+
+// Autenticação via Google
+Route::post('/auth/google', [AuthController::class, 'loginGoogle']);
+Route::get('/auth/google/redirect', [AuthController::class, 'redirectToGoogle']);
+
 Route::get('/servicos', [ServicoController::class, 'index']);
 
-// Buscar estabelecimento por nome
-Route::get('/estabelecimentos/buscar', [EstabelecimentoController::class, 'buscarPorNome']);
+// Buscar estabelecimento por nome ou por ramo
+Route::get('/estabelecimentos/explorar', [EstabelecimentoController::class, 'explorar']);
 
 // Detalhes completos do estabelecimento
 Route::get('/estabelecimentos/{id}/detalhes', [EstabelecimentoController::class, 'detalhesCompletos']);
 
 // Rotas protegidas (Só entra com Token Bearer)
 Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/dispositivo/token', [AuthController::class, 'salvarToken']);
+    
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
 
     // Retorna os dados do próprio usuário logado
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+    Route::put('/user/update', [PerfilController::class, 'update']);
+    Route::post('/user/upload-foto', [PerfilController::class, 'uploadFoto']);
+    Route::put('/user/alterar-senha', [PerfilController::class, 'alterarSenha']);
+    Route::delete('/user/excluir', [PerfilController::class, 'excluirConta']);
 
     // Logout (Revoga o token atual)
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -59,7 +78,10 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Confirmar presença no agendamento
     Route::post('/agendamentos/{id}/confirmar-presenca', [AgendamentoController::class, 'confirmarPresenca']);
-    
+
+    // Método para clientes e profissionais verem seus agendamentos
+    Route::get('/agendamentos/consultar-agenda', [AgendamentoController::class, 'minhaAgenda']);
+
     // Ver horários de funcionamento do estabeleciemtno
     Route::get('/horarios-funcionamento', [HorarioFuncionamentoController::class, 'index']);
 
@@ -68,11 +90,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware(['auth:sanctum', 'profissional'])->group(function () {    
         // Todas as rotas abaixo EXIGEM que o usuário esteja ATIVO
         Route::middleware('ativo')->group(function () {
-    
-            Route::get('/profissional/consultar-agenda', [AgendamentoController::class, 'consultarAgendaProfissional']);
 
             Route::patch('/agendamentos/{id}/atualizar-status', [AgendamentoController::class, 'atualizarStatusAgendamento']);
 
+            Route::post('/agendamentos/{id}/falta', [AgendamentoController::class, 'registrarFalta']);
+            
             Route::post('/profissional/bloqueios', [AgendamentoController::class, 'criarBloqueio']);
             
             Route::delete('/profissional/bloqueios/{id}', [AgendamentoController::class, 'excluirBloqueio']);
@@ -89,6 +111,9 @@ Route::middleware('auth:sanctum')->group(function () {
             
             Route::delete('/horarios-funcionamento/{id}', [HorarioFuncionamentoController::class, 'destroy']);
 
+            Route::post('/servicos/upload-foto', [ServicoController::class, 'uploadFoto']);
+
+            Route::post('/estabelecimento/upload-foto', [EstabelecimentoController::class, 'uploadFoto']);
         
         });
         

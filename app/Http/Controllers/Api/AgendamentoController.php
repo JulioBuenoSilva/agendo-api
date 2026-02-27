@@ -17,7 +17,7 @@ class AgendamentoController extends Controller
     {
         $this->service = $service;
     }
-
+ 
     /**
      * Listar horários disponíveis para o Flutter
      */
@@ -95,16 +95,11 @@ class AgendamentoController extends Controller
     /**
      * Consulta a lista de compromissos para um profissional em uma data específica
      */
-    public function consultarAgendaProfissional(Request $request)
+    public function minhaAgenda(Request $request)
     {
-        $request->validate([
-            'profissional_id' => 'required|exists:users,id',
-            'data'            => 'required|date_format:Y-m-d',
-        ]);
 
-        $agenda = $this->service->listarCompromissosDoProfissional(
-            $request->profissional_id,
-            $request->data
+        $agenda = $this->service->listarAgendaFuturaAgrupada(
+            $request->user()
         );
 
         return response()->json($agenda);
@@ -213,6 +208,20 @@ class AgendamentoController extends Controller
             return response()->json(['mensagem' => 'Presença confirmada com sucesso!']);
         } catch (\Exception $e) {
             return response()->json(['erro' => $e->getMessage()], 500);
+        }
+    }
+
+    public function registrarFalta(Request $request, $id)
+    {
+        try {
+            $agendamento = $this->service->registrarFalta($id, $request->user());
+            
+            return response()->json([
+                'message' => 'Falta registrada com sucesso. O histórico do cliente foi atualizado.',
+                'agendamento' => $agendamento
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
         }
     }
 }

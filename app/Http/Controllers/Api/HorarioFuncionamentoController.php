@@ -32,8 +32,8 @@ class HorarioFuncionamentoController extends Controller
 
         $request->validate([
             'dia_semana' => 'required|integer|between:0,6',
-            'hora_abertura' => 'required|date_format:H:i',
-            'hora_fechamento' => 'required|date_format:H:i|after:hora_abertura',
+            'hora_abertura' => 'required|date_format:H:i:s',
+            'hora_fechamento' => 'required|date_format:H:i:s|after:hora_abertura',
         ]);
 
         $horario = HorarioFuncionamento::create([

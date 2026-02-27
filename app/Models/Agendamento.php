@@ -59,4 +59,10 @@ class Agendamento extends Model
 
         return 'Ocupado';
     }
+
+    public function estabelecimento()
+    {
+        return $this->belongsTo(Estabelecimento::class, 'estabelecimento_id');
+    }
+
 }

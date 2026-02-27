@@ -25,6 +25,8 @@ class User extends Authenticatable
         'ativo', 
         'estabelecimento_id',
         'is_admin_estabelecimento',
+        'foto_path',
+        'fcm_token'
     ];
 
 
@@ -44,7 +46,20 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'ativo' => 'boolean',
         'is_admin_estabelecimento' => 'boolean',
-    ];
+    ]; 
+
+    /**
+     * Acessors adicionais para o modelo.
+     */
+    protected $appends = ['foto_url'];
+    
+    public function getFotoUrlAttribute()
+    {
+
+        return $this->foto_path 
+            ? asset('storage/' . $this->foto_path) 
+            : asset('storage/images/perfis/default-avatar.png'); // Uma imagem padrão caso esteja nulo
+    }
 
     /**
      * O estabelecimento onde o usuário trabalha ou é dono
@@ -92,7 +107,6 @@ class User extends Authenticatable
         return $this->tipo === 'cliente';
     }
 
-
     public function isAtivo(): bool
     {
         return $this->ativo === true;
@@ -108,5 +122,15 @@ class User extends Authenticatable
         return $this->is_admin_estabelecimento === true;
     }
 
+
+    public function lembretes()
+    {
+        return $this->hasMany(UserLembreteConfig::class, 'user_id');
+    }
+
+    public function routeNotificationForFcm()
+    {
+        return $this->fcm_token; // O nome da coluna que você criou na DB
+    }
 }
  

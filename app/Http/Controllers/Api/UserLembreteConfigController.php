@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 class UserLembreteConfigController extends Controller
 {
-    /**
+    /** 
      * Retorna a configuração de lembrete do usuário logado.
      * 
      * @param \Illuminate\Http\Request $request
@@ -18,21 +18,22 @@ class UserLembreteConfigController extends Controller
     {
         $user = $request->user();
         
-        $config = UserLembreteConfig::where('user_id', $user->id)->first();
+        $lembretes = UserLembreteConfig::where('user_id', $user->id)->get();
         
-        if (!$config) {
+        if (!$lembretes) {
             return response()->json([
-                'message' => 'Configuração não encontrada. Use POST para criar uma nova configuração.',
-                'config' => null
-            ], 404);
+                'lembretes' => null
+            ], 200);
         }
         
-        return response()->json($config);
+        return response()->json([
+            'lembretes' => $lembretes
+        ]);
     }
 
     /**
-     * Cria ou atualiza a configuração de lembrete do usuário logado.
-     * Como cada usuário só pode ter uma configuração, usa updateOrCreate.
+     * Cria  a configuração de lembrete do usuário logado.
+     * Um usuário pode ter mais de uma configuração.
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -40,19 +41,26 @@ class UserLembreteConfigController extends Controller
     public function store(Request $request)
     {
         $user = $request->user();
-        
+
         $request->validate([
-            'minutos_antes' => 'required|integer|min:1|max:10080', // Máximo 7 dias (10080 minutos)
+            'lembretes' => 'required|array|min:1',
+            'lembretes.*.minutos_antes' => 'required|integer|min:1|max:10080',
         ]);
 
-        $config = UserLembreteConfig::updateOrCreate(
-            ['user_id' => $user->id],
-            ['minutos_antes' => $request->minutos_antes]
-        );
+        $user->lembretes()->delete();
+
+        $lembretesCriados = [];
+
+        foreach ($request->lembretes as $l) {
+
+            $lembretesCriados[] = $user->lembretes()->create([
+                'minutos_antes' => $l['minutos_antes'],
+            ]);
+        }
 
         return response()->json([
             'message' => 'Configuração salva com sucesso.',
-            'config' => $config
+            'lembretes' => $lembretesCriados
         ], 201);
     }
 

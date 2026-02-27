@@ -3,6 +3,9 @@ namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
+use NotificationChannels\Fcm\FcmChannel;
+use NotificationChannels\Fcm\FcmMessage;
+use NotificationChannels\Fcm\Resources\Notification as FcmNotification;
 
 class AgendamentoAtualizado extends Notification
 {
@@ -17,13 +20,34 @@ class AgendamentoAtualizado extends Notification
         $this->mensagem = $mensagem;
     }
 
-    // Define que a notificação será salva no Banco de Dados
+    // Agora enviamos via Banco E via Firebase (Fcm)
     public function via($notifiable)
     {
-        return ['database'];
+        return ['database', FcmChannel::class];
     }
 
-    // O que será salvo no JSON do banco
+    public function toFcm($notifiable): FcmMessage
+    {
+        return FcmMessage::create()
+            ->notification(
+                FcmNotification::create(
+                    'Atualização no Agendo',
+                    $this->mensagem
+                )
+            )
+            ->data([
+                'agendamento_id' => (string) $this->agendamento->id,
+            ])
+            ->android([
+                'priority' => 'high',
+                'notification' => [
+                    'channel_id' => 'high_importance_channel',
+                    'sound' => 'default',
+                    'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+                ],
+            ]);
+    }
+
     public function toArray($notifiable)
     {
         return [

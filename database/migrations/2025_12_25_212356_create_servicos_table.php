@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('nome');
             $table->integer('duracao_minutos');
             $table->decimal('preco', 10, 2);
-            $table->text('observacao')->nullable();
+            $table->text('observacao')->nullable();$table->string('foto_path')->nullable();
             $table->boolean('ativo')->default(true);
             $table->timestamps();
         });

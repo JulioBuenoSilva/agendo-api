@@ -16,9 +16,10 @@ return new class extends Migration
             $table->string('nome');
             $table->string('identificador')->unique();
             $table->string('endereco');
-            $table->enum('ramo', ['beleza', 'saude', 'terapia', 'outros']);
+            $table->enum('ramo', ['beleza', 'saude', 'bem-estar', 'pet', 'outros']);
             $table->string('fuso_horario')->default('America/Sao_Paulo');
-            $table->timestamps();
+            $table->string('foto_path')->nullable();
+            $table->timestamps(); 
         });
     }
 

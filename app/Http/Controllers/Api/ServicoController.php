@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Api\Controller;
 use App\Models\Servico;
 use Illuminate\Http\Request;
+use Intervention\Image\Laravel\Facades\Image;
+use Illuminate\Support\Facades\Storage;
 
 class ServicoController extends Controller
 {
@@ -75,5 +77,43 @@ class ServicoController extends Controller
         $servico->update(['ativo' => false]);
 
         return response()->json(['message' => 'Serviço desativado com sucesso.']);
+    }
+
+    /**
+     * Upload de foto para o serviço
+     */
+
+    public function uploadFoto(Request $request)
+    {
+        $request->validate([
+            'servico' => 'required|exists:servicos,id',
+            'foto' => 'required|image|mimes:jpeg,png,jpg|max:5120', // Aceita até 5MB, mas vamos diminuir
+        ]);
+
+        $user = $request->user();
+        $servico = Servico::where('id', $request->servico)
+        ->where('estabelecimento_id', $user->estabelecimento_id) // Segurança total
+        ->firstOrFail();
+        
+        // 1. Criar um nome único
+        $nomeArquivo = 'servico_' . $servico->id . '_' . time() . '.webp'; // Usar .webp economiza +30%
+        $caminhoRelativo = 'servicos/' . $nomeArquivo;
+
+        // 2. Processar a imagem com Intervention Image
+        $imagemOtimizada = Image::read($request->file('foto'))
+            ->cover(600, 450) // Corta e centraliza em 600x450 (perfeito para formato estilo card)
+            ->toWebp(80);     // Converte para WebP com 80% de qualidade
+
+        // 3. Salvar no Storage
+        Storage::disk('public')->put($caminhoRelativo, (string) $imagemOtimizada);
+
+        // 4. Limpeza: Deleta a foto anterior
+        if ($servico->foto_path) {
+            Storage::disk('public')->delete($servico->foto_path);
+        }
+
+        $servico->update(['foto_path' => $caminhoRelativo]);
+
+        return response()->json(['url' => asset('storage/' . $caminhoRelativo)]);
     }
 }

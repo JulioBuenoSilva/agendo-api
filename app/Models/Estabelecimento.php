@@ -13,8 +13,22 @@ class Estabelecimento extends Model
         'identificador', 
         'endereco',
         'ramo', 
-        'fuso_horario'
+        'fuso_horario',
+        'foto_path'
     ];
+
+    /**
+     * Acessors adicionais para o modelo.
+     */
+    protected $appends = ['foto_url'];
+    
+    public function getFotoUrlAttribute()
+    {
+        return $this->foto_path 
+            ? asset('storage/' . $this->foto_path) 
+            : asset('storage/images/estabelecimentos/default-establishment.png');
+    }
+
 
     // Um estabelecimento tem um dono (que é um usuário)
     public function dono()

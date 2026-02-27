@@ -17,4 +17,6 @@ class UserLembreteConfig extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    
 }

@@ -88,7 +88,6 @@ class AgendamentoService
 
         if ($turnos->isEmpty()) return [];
 
-        // --- MELHORIA: Calcular as janelas apenas UMA vez antes do loop ---
         $janelasRisco = ($clienteId) ? $this->obterJanelasDeAltaTaxaDeFalta($clienteId) : [];
 
         $agendados = Agendamento::where('profissional_id', $profissionalId)
@@ -121,6 +120,12 @@ class AgendamentoService
             while ((clone $ponteiro)->addMinutes($duracao) <= $limiteTurno) {
                 $inicioSlot = clone $ponteiro;
                 $fimSlot = (clone $ponteiro)->addMinutes($duracao);
+                
+                // Se o slot começa antes ou exatamente agora, pula para o próximo
+                if ($inicioSlot->isPast()) {
+                    $ponteiro->addMinutes($step);
+                    continue;
+                }
 
                 // 1. Verifica No-Show (USANDO A VARIAVEL CALCULADA FORA DO LOOP)
                 $estaEmJanelaDeRisco = false;
@@ -130,7 +135,7 @@ class AgendamentoService
                         $estaEmJanelaDeRisco = true;
                         break;
                     }
-                }
+                } 
 
                 if ($estaEmJanelaDeRisco) {
                     $ponteiro->addMinutes($step);
@@ -149,7 +154,7 @@ class AgendamentoService
                 }
 
                 $ponteiro->addMinutes($step);
-            }
+            } 
         }
 
         return $slotsDisponiveis;
@@ -213,38 +218,71 @@ class AgendamentoService
     {
         return $this->alterarStatusDoAgendamento($agendamentoId, 'cancelado', $user);
     }
-
-    public function listarCompromissosDoProfissional($profissionalId, $data)
+    
+    /**
+     * Retorna a agenda futura do usuário logado agrupada por data.
+     */
+    public function listarAgendaFuturaAgrupada(User $user)
     {
-        // 1. Pega os agendamentos de clientes
-        $agendamentos = Agendamento::with(['cliente:id,name,telefone', 'servico:id,nome,duracao_minutos'])
-            ->where('profissional_id', $profissionalId)
-            ->whereDate('inicio_horario', $data)
+        $hoje = Carbon::today();
+
+        // 1. Buscar Agendamentos (do futuro ou hoje que não foram cancelados)
+        $agendamentos = Agendamento::with([
+                'servico:id,nome,duracao_minutos',
+                'profissional:id,name,telefone',
+                'cliente:id,name,telefone',
+                'estabelecimento:id,nome,endereco'
+            ])
+            ->where('inicio_horario', '>=', $hoje)
             ->where('status', '!=', 'cancelado')
-            ->get()
-            ->map(function($item) {
-                $item->tipo_registro = 'agendamento';
-                return $item;
-            });
-
-        // 2. Pega os bloqueios manuais/feriados
-        $bloqueios = BloqueioAgenda::where(function($q) use ($profissionalId) {
-                $q->where('profissional_id', $profissionalId)
-                ->orWhereNull('profissional_id');
+            ->where(function ($query) use ($user) {
+                $query->where('profissional_id', $user->id)
+                    ->orWhere('cliente_id', $user->id);
             })
-            ->whereDate('inicio', '<=', $data)
-            ->whereDate('fim', '>=', $data)
-            ->get()
-            ->map(function($item) {
-                $item->tipo_registro = 'bloqueio';
-                return $item;
-            });
+            ->get(); 
 
-        // 3. Junta tudo e ordena por horário de início
-        return $agendamentos->concat($bloqueios)->sortBy(function($item) {
-            return $item->inicio_horario ?? $item->inicio;
-        })->values();
+        // 2. Buscar Bloqueios (apenas para profissionais)
+        $bloqueios = collect();
+        if ($user->tipo === 'profissional') {
+            $bloqueios = BloqueioAgenda::where(function ($query) use ($user) {
+                    $query->where('profissional_id', $user->id)
+                        ->orWhereNull('profissional_id');
+                })
+                ->where('fim', '>=', $hoje) // Bloqueios que terminam hoje ou no futuro
+                ->get();
+        }
+
+        // 3. Unificar e Formatar
+        $agendaUnificada = $agendamentos->map(function ($item) use ($user) {
+            return [
+                'tipo_registro'   => 'agendamento',
+                'papel_usuario'   => (int) $item->profissional_id === (int) $user->id ? 'profissional' : 'cliente',
+                'id'              => $item->id,
+                'inicio'          => $item->inicio_horario,
+                'fim'             => $item->fim_horario,
+                'status'          => $item->status,
+                'servico'         => $item->servico->nome ?? 'Serviço',
+                'contraparte'     => (int) $item->profissional_id === (int) $user->id ? ($item->cliente->name ?? $item->cliente_nome) : $item->profissional->name,
+                'estabelecimento' => $item->estabelecimento->nome ?? null,
+                'data_agrupamento' => Carbon::parse($item->inicio_horario)->format('Y-m-d')
+            ];
+        })->concat($bloqueios->map(function ($item) {
+            return [
+                'tipo_registro'   => 'bloqueio',
+                'papel_usuario'   => 'profissional',
+                'id'              => $item->id,
+                'inicio'          => $item->inicio,
+                'fim'             => $item->fim,
+                'motivo'          => $item->motivo,
+                'servico'         => 'Bloqueio',
+                'data_agrupamento' => Carbon::parse($item->inicio)->format('Y-m-d')
+            ];
+        }));
+
+        // 4. Ordenar e Agrupar por data
+        return $agendaUnificada->sortBy('inicio')->groupBy('data_agrupamento');
     }
+
 
     /**
      * Altear o status de um agendamento existente para o novo status
@@ -305,27 +343,49 @@ class AgendamentoService
             ));
         }
         
-        // Cenário C: PROFISSIONAL confirmou -> Notifica CLIENTE
-        if ($novoStatus === 'confirmado' && $autor->id === $agendamento->profissional_id) {
-            if ($agendamento->cliente) {
-                $agendamento->cliente->notify(new AgendamentoAtualizado(
-                    $agendamento, 
-                    "Seu agendamento foi confirmado pelo profissional!"
-                ));
-            }
-        }
     }
 
     /**
      * Cria um bloqueio na agenda (ex: folga, médico, feriado)
+     * Validando se não existem agendamentos ativos no período.
      */
     public function registrarBloqueio(array $dados)
     {
+        $inicio = Carbon::parse($dados['inicio']);
+        $fim = Carbon::parse($dados['fim']);
+        $profissionalId = $dados['profissional_id'] ?? null;
+        $estabelecimentoId = $dados['estabelecimento_id'];
+
+        // 1. Verificar se existem agendamentos ativos que colidem com este bloqueio
+        $conflitos = Agendamento::where('estabelecimento_id', $estabelecimentoId)
+            ->where('status', '!=', 'cancelado')
+            ->where('status', '!=', 'faltou')
+            ->where(function ($query) use ($profissionalId) {
+                // Se o bloqueio for para um profissional específico
+                if ($profissionalId) {
+                    $query->where('profissional_id', $profissionalId);
+                } 
+                // Se for bloqueio do estabelecimento todo, qualquer agendamento conta
+            })
+            ->where(function ($query) use ($inicio, $fim) {
+                // Lógica de colisão de horários
+                $query->where(function ($q) use ($inicio, $fim) {
+                    $q->where('inicio_horario', '<', $fim)
+                    ->where('fim_horario', '>', $inicio);
+                });
+            })
+            ->exists();
+
+        if ($conflitos) {
+            abort(422, "Não é possível criar o bloqueio porque existem agendamentos ativos no período informado. Cancele-os antes de prosseguir.");
+        }
+
+        // 2. Se não houver conflito, cria o bloqueio
         return BloqueioAgenda::create([
-            'estabelecimento_id' => $dados['estabelecimento_id'],
-            'profissional_id'   => $dados['profissional_id'] ?? null, // Nulo = Estabelecimento todo
-            'inicio'            => Carbon::parse($dados['inicio']),
-            'fim'               => Carbon::parse($dados['fim']),
+            'estabelecimento_id' => $estabelecimentoId,
+            'profissional_id'   => $profissionalId,
+            'inicio'            => $inicio,
+            'fim'               => $fim,
             'motivo'            => $dados['motivo'] ?? 'Bloqueio manual',
         ]);
     }
@@ -402,4 +462,26 @@ class AgendamentoService
         }
     }
 
+    /**
+     * Registra que o cliente não compareceu ao agendamento (No-show).
+     * Só pode ser feito após o horário de início.
+     */
+    public function registrarFalta($agendamentoId, User $autor)
+    {
+        $agendamento = Agendamento::findOrFail($agendamentoId);
+
+        // 1. Validar se o horário de início já passou
+        if ($agendamento->inicio_horario->isFuture()) {
+            throw new Exception("Não é possível registrar falta antes do horário de início do agendamento.");
+        }
+
+        // 2. Validar se o status atual permite marcar falta (não pode marcar falta em cancelado)
+        if ($agendamento->status === 'cancelado') {
+            throw new Exception("Não é possível marcar falta em um agendamento que já foi cancelado.");
+        }
+
+        // 3. Reutilizamos a lógica de alteração de status para garantir permissões
+        // O profissional ou admin altera para 'faltou'
+        return $this->alterarStatusDoAgendamento($agendamentoId, 'faltou', $autor);
+    }
 }

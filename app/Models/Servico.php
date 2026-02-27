@@ -13,13 +13,26 @@ class Servico extends Model
         'duracao_minutos', 
         'preco', 
         'observacao', 
-        'ativo'
+        'ativo',
+        'foto_path'
     ];
 
     protected $casts = [
         'preco' => 'float',
         'ativo' => 'boolean'
     ];
+
+    /**
+     * Acessors adicionais para o modelo.
+     */
+    protected $appends = ['foto_url'];
+
+    public function getFotoUrlAttribute()
+    {
+        return $this->foto_path 
+            ? asset('storage/' . $this->foto_path) 
+            : asset('storage/images/servicos/default-service.png'); // Uma imagem padrão caso esteja nulo
+    }
 
     public function estabelecimento()
     {

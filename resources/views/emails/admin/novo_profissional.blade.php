@@ -13,8 +13,8 @@
         </p>
 
         <p>
-            Enquanto você não aprovar, ele não poderá visualizar sua agenda
-            ou realizar agendamentos em seu nome.
+            Enquanto você não aprovar, ele não poderá ter uma agenda
+            ou realizar agendamentos em seu estabelecimento.
         </p>
 
         <div style="background-color: #f1f8e9; padding: 15px; border-left: 5px solid #27ae60; margin: 20px 0;">
