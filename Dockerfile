@@ -15,12 +15,13 @@ RUN apt-get update && apt-get install -y \
     libicu-dev \
     libcurl4-openssl-dev \
     libssl-dev \
+    libpq-dev \
     nginx \
     supervisor \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install \
         pdo \
-        pdo_mysql \
+        pdo_pgsql \
         mbstring \
         exif \
         pcntl \
