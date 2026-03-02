@@ -1,0 +1,42 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    container_name: agendo_app
+    ports:
+      - "8000:80"
+    depends_on:
+      - db
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: agendo
+      DB_USERNAME: agendo
+      DB_PASSWORD: secret
+    networks:
+      - agendo_net
+
+  db:
+    image: mariadb:11
+    container_name: agendo_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: agendo
+      MYSQL_USER: agendo
+      MYSQL_PASSWORD: secret
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3307:3306"
+    networks:
+      - agendo_net
+
+volumes:
+  db_data:
+
+networks:
+  agendo_net:

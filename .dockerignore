@@ -1,0 +1,15 @@
+.git
+.gitignore
+node_modules
+vendor
+storage/logs
+storage/framework
+storage/app/firebase/*
+.env
+.env.*
+docker-compose.yml
+docker-compose.override.yml
+firebase-auth.json
+firebase.b64
+tests
+docs
