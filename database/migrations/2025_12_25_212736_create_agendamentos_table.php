@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -14,12 +15,10 @@ return new class extends Migration
             $table->foreignId('estabelecimento_id')
                 ->constrained('estabelecimentos');
 
-            // cliente é opcional
             $table->foreignId('cliente_id')
                 ->nullable()
                 ->constrained('users');
 
-            // nome livre para cliente não cadastrado
             $table->string('cliente_nome')->nullable();
 
             $table->foreignId('profissional_id')
@@ -32,20 +31,13 @@ return new class extends Migration
             $table->dateTime('fim_horario');    // UTC
 
             $table->string('status')->default('pendente');
-            $table->check(
-                "status IN ('pendente','confirmado','cancelado','faltou')"
-            );
 
-            // 🔥 NOVOS CAMPOS
             $table->foreignId('status_alterado_por')
                 ->nullable()
                 ->constrained('users')
                 ->nullOnDelete();
 
             $table->string('status_autor_tipo')->nullable();
-            $table->check(
-                "status_autor_tipo IN ('cliente','profissional','sistema')"
-            );
 
             $table->text('observacoes')->nullable();
             $table->timestamps();
@@ -54,12 +46,27 @@ return new class extends Migration
                 ['profissional_id', 'inicio_horario'],
                 'idx_profissional_horario'
             );
-
-            // garante que existe cliente_id OU cliente_nome
-            $table->check(
-                '(cliente_id IS NOT NULL OR cliente_nome IS NOT NULL)'
-            );
         });
+
+        // CHECKS adicionados manualmente (PostgreSQL)
+
+        DB::statement("
+            ALTER TABLE agendamentos
+            ADD CONSTRAINT agendamentos_status_check
+            CHECK (status IN ('pendente','confirmado','cancelado','faltou'))
+        ");
+
+        DB::statement("
+            ALTER TABLE agendamentos
+            ADD CONSTRAINT agendamentos_status_autor_tipo_check
+            CHECK (status_autor_tipo IS NULL OR status_autor_tipo IN ('cliente','profissional','sistema'))
+        ");
+
+        DB::statement("
+            ALTER TABLE agendamentos
+            ADD CONSTRAINT agendamentos_cliente_check
+            CHECK (cliente_id IS NOT NULL OR cliente_nome IS NOT NULL)
+        ");
     }
 
     public function down(): void
