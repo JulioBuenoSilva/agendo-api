@@ -89,7 +89,7 @@ return [
             'host' => env('DB_HOST', 'dpg-d6ipfh3h46gs73f2icig-a'),
             'port' => env('DB_PORT', '5432'),
             'database' => env('DB_DATABASE', 'agendo_db_8diu'),
-            'username' => env('DB_USERNAME', 'rootbuenotechsolucoes'),
+            'username' => env('DB_USERNAME', 'buenotechsolucoes'),
             'password' => env('DB_PASSWORD', 'ylwMlZrOSSPaOJSZQeGup0OFRsYsRwYF'),
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
