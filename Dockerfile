@@ -44,10 +44,17 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-di
 
 COPY . .
 
-# Remova qualquer cache que possa ter vindo da sua máquina local (O PULO DO GATO)
+# Garante que as pastas existam
+RUN mkdir -p storage bootstrap/cache
+
+# Permissões corretas para Laravel
+RUN chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
+
+# Limpa caches antigos
 RUN rm -f bootstrap/cache/*.php
 
-# Agora sim, gere os caches de produção
+# Gera caches de produção
 RUN php artisan config:cache && \
     php artisan route:cache
 
@@ -58,9 +65,6 @@ RUN echo "upload_max_filesize=10M" > /usr/local/etc/php/conf.d/uploads.ini \
 
 ENV APP_ENV=production
 ENV APP_DEBUG=false
-
-# Permissões corretas
-RUN chown -R www-data:www-data storage bootstrap/cache
 
 # Nginx config
 COPY docker/nginx.conf /etc/nginx/sites-available/default
