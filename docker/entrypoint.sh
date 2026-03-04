@@ -8,7 +8,13 @@ fi
 # Rodar migrations automaticamente no deploy
 php artisan migrate --force
 
-# Limpar caches antigos se necessário
+php artisan config:clear
 php artisan cache:clear
+
+php artisan config:cache
+php artisan route:cache
+
+# Conecta o diretório de storage para servir arquivos públicos
+php artisan storage:link || true
 
 exec "$@"

@@ -43,7 +43,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Application URL
+    | Application URL 
     |--------------------------------------------------------------------------
     |
     | This URL is used by the console to properly generate URLs when using
@@ -52,7 +52,7 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'http://192.168.1.70'),
+    'url' => env('APP_URL', 'https://agendo-api-ai70.onrender.com'),
 
     /*
     |--------------------------------------------------------------------------

@@ -10,6 +10,8 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     libpng-dev \
+    libjpeg-dev \
+    libwebp-dev \
     libjpeg62-turbo-dev \
     libfreetype6-dev \
     libicu-dev \
@@ -18,7 +20,7 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     nginx \
     supervisor \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install \
         pdo \
         pdo_pgsql \
@@ -55,10 +57,6 @@ RUN mkdir -p storage/framework/cache \
 
 # Limpa caches antigos
 RUN rm -f bootstrap/cache/*.php
-
-# Gera caches de produção
-RUN php artisan config:cache && \
-    php artisan route:cache
 
 # Ajustes de performance e upload
 RUN echo "upload_max_filesize=10M" > /usr/local/etc/php/conf.d/uploads.ini \
