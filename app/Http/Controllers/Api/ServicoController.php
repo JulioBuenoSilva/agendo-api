@@ -97,7 +97,7 @@ class ServicoController extends Controller
         
         // 1. Criar um nome único
         $nomeArquivo = 'servico_' . $servico->id . '_' . time() . '.webp'; // Usar .webp economiza +30%
-        $caminhoRelativo = 'servicos/' . $nomeArquivo;
+        $caminhoRelativo = 'images/servicos/' . $nomeArquivo;
 
         // 2. Processar a imagem com Intervention Image
         $imagemOtimizada = Image::read($request->file('foto'))

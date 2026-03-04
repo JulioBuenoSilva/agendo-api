@@ -146,7 +146,7 @@ class EstabelecimentoController extends Controller
         
         // 1. Criar um nome único
         $nomeArquivo = 'estabelecimento_' . $estabelecimento->id . '_' . time() . '.webp'; // Usar .webp economiza +30%
-        $caminhoRelativo = 'estabelecimentos/' . $nomeArquivo;
+        $caminhoRelativo = 'images/estabelecimentos/' . $nomeArquivo;
 
         // 2. Processar a imagem com Intervention Image
         $imagemOtimizada = Image::read($request->file('foto'))
