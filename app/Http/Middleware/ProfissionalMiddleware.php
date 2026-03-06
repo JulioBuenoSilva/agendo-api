@@ -15,12 +15,16 @@ class ProfissionalMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (! $request->user() || $request->user()->tipo !== 'profissional') {
+        $user = $request->user();
+
+        if (!$user || !in_array($user->tipo, ['profissional', 'admin'])) {
             abort(403, 'Acesso negado.');
         }
 
-        if (!$request->user()->ativo) {
-            return response()->json(['error' => 'Sua conta ainda não foi aprovada.'], 403);
+        if (!$user->ativo) {
+            return response()->json([
+                'error' => 'Sua conta ainda não foi aprovada.'
+            ], 403);
         }
 
         return $next($request);
