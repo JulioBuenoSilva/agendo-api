@@ -41,10 +41,10 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI'),
     ],
     'fcm' => [
-        'credentials' => base_path(env('FIREBASE_CREDENTIALS', '/var/www/firebase-auth.json')),
+        'credentials' => env('FIREBASE_CREDENTIALS', '/var/www/firebase-auth.json'),
     ],
     'firebase' => [
-        'credentials' => base_path(env('FIREBASE_CREDENTIALS')),
+        'credentials' => env('FIREBASE_CREDENTIALS', '/var/www/firebase-auth.json'),
     ],
 
 ];
