@@ -3,60 +3,44 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB; 
-use App\Models\Agendamento;        
-use App\Notifications\AgendamentoAtualizado; 
+use App\Models\Agendamento;
+use App\Models\UserLembreteConfig;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\LembreteAgendamentoNotification;
 
 class EnviarLembretesAgendamento extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'app:enviar-lembretes-agendamento';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Envia lembretes de agendamento';
+    protected $signature = 'agendo:enviar-lembretes';
+    protected $description = 'Verifica e envia pushes de lembrete baseados na config do usuário';
 
     public function handle()
     {
-        $configs = DB::table('user_lembretes_config')->get();
+        $agora = Carbon::now()->setSeconds(0); // Ignoramos segundos para bater o minuto exato
+
+        // 1. Buscamos todas as configs de lembrete existentes
+        $configs = UserLembreteConfig::all();
 
         foreach ($configs as $config) {
-            $dataAlvo = now()->addMinutes($config->minutos_antes)->format('Y-m-d H:i:00');
+            // Calculamos o horário que o agendamento deve ter para que o lembrete saia AGORA
+            // Ex: Se o user quer 2h antes e agora são 14h, buscamos agendamentos das 16h.
+            $horarioAlvo = $agora->copy()->addMinutes($config->minutos_antes);
 
-            // Buscamos apenas os agendamentos que ainda estão como 'pendente' ou 'confirmado'
-            // mas que precisam dessa confirmação de última hora do cliente.
-            $agendamentos = Agendamento::where('inicio_horario', $dataAlvo)
-                ->where('cliente_id', $config->user_id)
-                ->whereIn('status', ['pendente', 'confirmado']) 
+            $agendamentos = Agendamento::where('user_id', $config->user_id)
+                ->where('status', 'confirmado')
+                ->whereBetween('data_hora', [
+                    $horarioAlvo->copy()->startOfMinute(),
+                    $horarioAlvo->copy()->endOfMinute()
+                ])
+                ->with(['profissional', 'servico'])
                 ->get();
 
             foreach ($agendamentos as $agendamento) {
-                // Alteramos o status para indicar que estamos esperando o cliente clicar
-                $agendamento->update(['status' => 'aguardando_confirmacao']);
-
-                $agendamento->cliente->notify(new AgendamentoAtualizado(
-                    $agendamento,
-                    "Você confirma sua presença em " . $this->formatarTempo($config->minutos_antes) . "? Clique aqui para confirmar."
-                ));
+                // Dispara a notificação (Firebase + DB)
+                $agendamento->user->notify(new LembreteAgendamentoNotification($agendamento));
+                
+                $this->info("Lembrete enviado para {$agendamento->user->name} sobre o agendamento ID: {$agendamento->id}");
             }
         }
-    }
-    
-    // Método auxiliar para deixar a mensagem bonita
-    private function formatarTempo($minutos)
-    {
-        if ($minutos < 60) return "$minutos minutos";
-        if ($minutos == 60) return "1 hora";
-        if ($minutos < 1440) return floor($minutos / 60) . " horas";
-        if ($minutos == 1440) return "1 dia";
-        return floor($minutos / 1440) . " dias";
     }
 }
