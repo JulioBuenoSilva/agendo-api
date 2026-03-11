@@ -34,21 +34,21 @@ class AuthController extends Controller
         if (! $user) {
             return response()->json([
                 'code' => 'USER_NOT_FOUND',
-                'message' => 'Usuário não encontrado.'
+                'message' => 'Credenciais inválidas.'
             ], 404);
         }
 
         if (! Hash::check($request->password, $user->password)) {
             return response()->json([
                 'code' => 'INVALID_PASSWORD',
-                'message' => 'Senha incorreta.'
+                'message' => 'Credenciais inválidas.'
             ], 401);
         }
 
         if (! $user->ativo) {
             return response()->json([
                 'code' => 'USER_INACTIVE',
-                'message' => 'Conta ainda não aprovada.'
+                'message' => 'Conta ainda não aprovada, por favor, aguarde.'
             ], 403);
         }
 

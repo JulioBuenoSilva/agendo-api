@@ -28,6 +28,7 @@ Route::get('/estabelecimentos/explorar', [EstabelecimentoController::class, 'exp
 
 // Detalhes completos do estabelecimento
 Route::get('/estabelecimentos/{id}/detalhes', [EstabelecimentoController::class, 'detalhesCompletos']);
+Route::get('/estabelecimento/{id}/foto', [EstabelecimentoController::class, 'getFotoEstabelecimento']);
 
 // Rotas protegidas (Só entra com Token Bearer)
 Route::middleware('auth:sanctum')->group(function () {

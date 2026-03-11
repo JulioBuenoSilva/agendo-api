@@ -131,6 +131,18 @@ class EstabelecimentoController extends Controller
     }
 
     /**
+     * Retorna a foto do estabelecimento
+     */
+    public function getFotoEstabelecimento($id)
+    {
+        $estabelecimento = Estabelecimento::findOrFail($id);
+
+        return response()->json([
+            'foto_url' => $estabelecimento->foto_url
+        ]);
+    }
+    
+    /**
      * Upload de foto para o estabelecimento
      */
     public function uploadFoto(Request $request)
