@@ -47,6 +47,7 @@ class EstabelecimentoController extends Controller
         $ramo = $request->query('ramo');
 
         $query = Estabelecimento::query()
+            ->with('horariosFuncionamento')
             ->select(
                 'estabelecimentos.id',
                 'estabelecimentos.nome',

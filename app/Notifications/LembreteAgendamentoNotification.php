@@ -55,7 +55,7 @@ class LembreteAgendamentoNotification extends Notification
     {
         return [
             'agendamento_id' => $this->agendamento->id,
-            'mensagem' => "Lembrete de agendamento: {$this->agendamento->servico->nome} às " . Carbon::parse($this->agendamento->inicio_horario)->format('H:i'),
+            'mensagem' => "Lembrete de agendamento: {$this->agendamento->servico->nome} às " . Carbon::parse($this->agendamento->inicio_horario)->format('H:i') . "Por favor. confirme sua presença se ainda não o fez.",
         ];
     }
 }
