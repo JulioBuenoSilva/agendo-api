@@ -20,7 +20,7 @@ php artisan route:cache
 rm -f /var/www/public/storage
 
 # 2. Recriar o link simbólico
-# O Laravel vai ligar /var/www/public/storage -> /var/www/storage/app/public
+# O Laravel vai ligar /var/www/public/storage -> /var/www/storage/app/public, se Deus quiser
 php artisan storage:link --force || true
 
 # 3. Garantir que as subpastas existam dentro do Volume
