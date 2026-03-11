@@ -1,4 +1,7 @@
 *
 !.gitignore
 !images/
-!images/**
+# Aqui dizemos: ignore tudo dentro de images, mas mantenha a pasta
+images/*
+# Exceto o arquivo .gitkeep (para a pasta não sumir)
+!.gitkeep
