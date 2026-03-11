@@ -303,9 +303,9 @@ class AgendamentoService
         elseif ($autor->id === $agendamento->profissional_id) {
             $autorTipo = 'profissional';
         }
-        // Qualquer outro caso é abuso
+        // Qualquer outro caso deve ser negado
         else {
-            abort(403, 'Você não tem permissão para alterar este agendamento.');
+            abort(403, 'Acesso negado.');
         }
 
         $agendamento->update([
