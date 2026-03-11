@@ -8,6 +8,7 @@ use App\Models\UserLembreteConfig;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\LembreteAgendamentoNotification;
+use Illuminate\Support\Facades\Log;
 
 class EnviarLembretesAgendamento extends Command
 {
@@ -16,6 +17,7 @@ class EnviarLembretesAgendamento extends Command
 
     public function handle()
     {
+        Log::info("O Scheduler chamou o comando de lembretes em: " . now());
         $agora = Carbon::now()->setSeconds(0); // Ignoramos segundos para bater o minuto exato
 
         // 1. Buscamos todas as configs de lembrete existentes
@@ -27,9 +29,11 @@ class EnviarLembretesAgendamento extends Command
             $horarioAlvo = $agora->copy()->addMinutes($config->minutos_antes);
 
             $agendamentos = Agendamento::where('cliente_id', $config->user_id)
-                ->where('status', 'confirmado')
-                ->orWhere('status', 'pendente')
-                ->whereBetween('data_hora', [
+                ->where(function ($query) {
+                    $query->where('status', 'confirmado')
+                        ->orWhere('status', 'pendente');
+                })
+                ->whereBetween('inicio_horario', [
                     $horarioAlvo->copy()->startOfMinute(),
                     $horarioAlvo->copy()->endOfMinute()
                 ])
@@ -38,9 +42,9 @@ class EnviarLembretesAgendamento extends Command
 
             foreach ($agendamentos as $agendamento) {
                 // Dispara a notificação (Firebase + DB)
-                $agendamento->user->notify(new LembreteAgendamentoNotification($agendamento));
+                $agendamento->cliente->notify(new LembreteAgendamentoNotification($agendamento));
                 
-                $this->info("Lembrete enviado para {$agendamento->user->name} sobre o agendamento ID: {$agendamento->id}");
+                $this->info("Lembrete enviado para {$agendamento->cliente->name} sobre o agendamento ID: {$agendamento->id}");
             }
         }
     }

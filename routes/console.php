@@ -8,9 +8,5 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-
-// Roda a cada hora para limpar a agenda
-Schedule::command('app:finalizar-agendamentos')->hourly();
-
 // Roda a cada minuto para enviar os lmebretes
 Schedule::command('agendo:enviar-lembretes')->everyMinute();

@@ -134,14 +134,10 @@ class EstabelecimentoController extends Controller
      */
     public function uploadFoto(Request $request)
     {
-        Log::info('UPLOAD FOTO HIT');
         $request->validate([
             'estabelecimento' => 'required|exists:estabelecimentos,id',
             'foto' => 'required|image|mimes:jpeg,png,jpg|max:5120', // Aceita até 5MB, mas vamos diminuir
         ]);
-
-        Log::info($request->user());
-        Log::info($request->estabelecimento); 
 
         $user = $request->user();
         $estabelecimento = Estabelecimento::where('id', $request->estabelecimento)
