@@ -26,8 +26,9 @@ class EnviarLembretesAgendamento extends Command
             // Ex: Se o user quer 2h antes e agora são 14h, buscamos agendamentos das 16h.
             $horarioAlvo = $agora->copy()->addMinutes($config->minutos_antes);
 
-            $agendamentos = Agendamento::where('user_id', $config->user_id)
+            $agendamentos = Agendamento::where('cliente_id', $config->user_id)
                 ->where('status', 'confirmado')
+                ->orWhere('status', 'pendente')
                 ->whereBetween('data_hora', [
                     $horarioAlvo->copy()->startOfMinute(),
                     $horarioAlvo->copy()->endOfMinute()
