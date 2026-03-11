@@ -481,7 +481,7 @@ class AgendamentoService
         }
 
         // 3. Reutilizamos a lógica de alteração de status para garantir permissões
-        // O profissional ou admin altera para 'faltou'
+        // O profissional altera para 'faltou'
         return $this->alterarStatusDoAgendamento($agendamentoId, 'faltou', $autor);
     }
 }
