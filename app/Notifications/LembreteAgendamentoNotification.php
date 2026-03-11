@@ -23,28 +23,30 @@ class LembreteAgendamentoNotification extends Notification
 
     public function toFcm($notifiable): FcmMessage
     {
-        $hora = Carbon::parse($this->agendamento->data_hora)->format('H:i');
+        // Correção: Usar inicio_horario em vez de data_hora
+        $hora = Carbon::parse($this->agendamento->inicio_horario)->format('H:i');
         $servico = $this->agendamento->servico->nome;
         $profissional = $this->agendamento->profissional->name;
 
-        // 1. Criamos o recurso de notificação visual (Título e Corpo)
-        $fcmNotification = FcmNotification::create()
-            ->title("⏰ Hora do seu compromisso!")
-            ->body("Olá, {$notifiable->name}! Não esqueça: {$servico} às {$hora} com {$profissional}.");
-
-        // 2. Retornamos o FcmMessage conforme a classe que você enviou
         return FcmMessage::create()
-            ->name("LembreteAgendamento") // Opcional, para analytics no Firebase
-            ->notification($fcmNotification)
+            ->name("LembreteAgendamento")
+            ->notification(FcmNotification::create()
+                ->title("⏰ Hora do seu compromisso!")
+                ->body("Olá, {$notifiable->name}! Não esqueça: {$servico} às {$hora} com {$profissional}.")
+            )
             ->data([
                 'agendamento_id' => (string) $this->agendamento->id,
-                'click_action' => 'FLUTTER_NOTIFICATION_CLICK', // Importante para o Flutter abrir a tela certa
+                // Mantemos aqui para compatibilidade com o listener de background
+                'click_action' => 'FLUTTER_NOTIFICATION_CLICK', 
             ])
             ->android([
+                'priority' => 'high', // Prioridade movida para o nível correto do Android
                 'notification' => [
                     'channel_id' => 'high_importance_channel',
-                    'priority' => 'high',
                     'sound' => 'default',
+                    'click_action' => 'FLUTTER_NOTIFICATION_CLICK', // Essencial para o push aparecer no Android
+                    'sticky' => false,
+                    'visibility' => 'public'
                 ],
             ]);
     }
@@ -53,7 +55,7 @@ class LembreteAgendamentoNotification extends Notification
     {
         return [
             'agendamento_id' => $this->agendamento->id,
-            'mensagem' => "Lembrete de agendamento: {$this->agendamento->servico->nome} às " . Carbon::parse($this->agendamento->data_hora)->format('H:i'),
+            'mensagem' => "Lembrete de agendamento: {$this->agendamento->servico->nome} às " . Carbon::parse($this->agendamento->inicio_horario)->format('H:i'),
         ];
     }
 }
