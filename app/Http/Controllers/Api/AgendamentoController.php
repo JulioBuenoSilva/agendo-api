@@ -96,7 +96,7 @@ class AgendamentoController extends Controller
      * Consulta a lista de compromissos para um profissional em uma data específica
      */
     public function minhaAgenda(Request $request)
-    {
+    { 
 
         $agenda = $this->service->listarAgendaFuturaAgrupada(
             $request->user()

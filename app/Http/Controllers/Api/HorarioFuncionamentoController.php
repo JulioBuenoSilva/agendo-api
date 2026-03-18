@@ -36,11 +36,28 @@ class HorarioFuncionamentoController extends Controller
             'hora_fechamento' => 'required|date_format:H:i:s|after:hora_abertura',
         ]);
 
+        $inicio = $request->hora_abertura;
+        $fim = $request->hora_fechamento;
+
+        $conflito = HorarioFuncionamento::where('estabelecimento_id', $user->estabelecimento_id)
+            ->where('dia_semana', $request->dia_semana)
+            ->where(function ($query) use ($inicio, $fim) {
+                $query->where('hora_abertura', '<', $fim)
+                    ->where('hora_fechamento', '>', $inicio);
+            })
+            ->exists();
+
+        if ($conflito) {
+            return response()->json([
+                'message' => 'Já existe um horário que se sobrepõe a este intervalo.'
+            ], 422);
+        }
+
         $horario = HorarioFuncionamento::create([
             'estabelecimento_id' => $user->estabelecimento_id,
             'dia_semana' => $request->dia_semana,
-            'hora_abertura' => $request->hora_abertura,
-            'hora_fechamento' => $request->hora_fechamento,
+            'hora_abertura' => $inicio,
+            'hora_fechamento' => $fim,
         ]);
 
         return response()->json($horario, 201);
