@@ -258,8 +258,8 @@ class AgendamentoService
                 'tipo_registro'   => 'agendamento',
                 'papel_usuario'   => (int) $item->profissional_id === (int) $user->id ? 'profissional' : 'cliente',
                 'id'              => $item->id,
-                'inicio'          => $item->inicio_horario,
-                'fim'             => $item->fim_horario,
+                'inicio'          => $item->inicio_horario->timezone('America/Sao_Paulo')->toDateTimeString(),
+                'fim'             => $item->fim_horario->timezone('America/Sao_Paulo')->toDateTimeString(),
                 'status'          => $item->status,
                 'servico'         => $item->servico->nome ?? 'Serviço',
                 'contraparte'     => (int) $item->profissional_id === (int) $user->id ? ($item->cliente->name ?? $item->cliente_nome) : $item->profissional->name,
@@ -271,8 +271,8 @@ class AgendamentoService
                 'tipo_registro'   => 'bloqueio',
                 'papel_usuario'   => 'profissional',
                 'id'              => $item->id,
-                'inicio'          => $item->inicio,
-                'fim'             => $item->fim,
+                'inicio'          => $item->inicio->timezone('America/Sao_Paulo')->toDateTimeString(),
+                'fim'             => $item->fim->timezone('America/Sao_Paulo')->toDateTimeString(),
                 'motivo'          => $item->motivo,
                 'servico'         => 'Bloqueio',
                 'data_agrupamento' => Carbon::parse($item->inicio)->format('Y-m-d')
@@ -421,7 +421,7 @@ class AgendamentoService
                 ->exists();
 
             if ($conflito) {
-                throw new Exception("Conflito: Já existe um compromisso ou bloqueio neste horário.");
+                throw new Exception("Conflito: Já existe um compromisso neste horário.");
             }
 
             return Agendamento::create([
