@@ -27,8 +27,8 @@ return new class extends Migration
             $table->foreignId('servico_id')
                 ->constrained('servicos');
 
-            $table->dateTime('inicio_horario'); // UTC
-            $table->dateTime('fim_horario');    // UTC
+            $table->dateTime('inicio_horario');
+            $table->dateTime('fim_horario');
 
             $table->string('status')->default('pendente');
 
@@ -48,25 +48,33 @@ return new class extends Migration
             );
         });
 
-        // CHECKS adicionados manualmente (PostgreSQL)
+        // Constraints apenas para bancos que suportam ALTER TABLE (PostgreSQL)
+        if (DB::getDriverName() !== 'sqlite') {
 
-        DB::statement("
-            ALTER TABLE agendamentos
-            ADD CONSTRAINT agendamentos_status_check
-            CHECK (status IN ('pendente','confirmado','cancelado','faltou'))
-        ");
+            DB::statement("
+                ALTER TABLE agendamentos
+                ADD CONSTRAINT agendamentos_status_check
+                CHECK (status IN ('pendente','confirmado','cancelado','faltou'))
+            ");
 
-        DB::statement("
-            ALTER TABLE agendamentos
-            ADD CONSTRAINT agendamentos_status_autor_tipo_check
-            CHECK (status_autor_tipo IS NULL OR status_autor_tipo IN ('cliente','profissional','sistema'))
-        ");
+            DB::statement("
+                ALTER TABLE agendamentos
+                ADD CONSTRAINT agendamentos_status_autor_tipo_check
+                CHECK (
+                    status_autor_tipo IS NULL OR
+                    status_autor_tipo IN ('cliente','profissional','sistema')
+                )
+            ");
 
-        DB::statement("
-            ALTER TABLE agendamentos
-            ADD CONSTRAINT agendamentos_cliente_check
-            CHECK (cliente_id IS NOT NULL OR cliente_nome IS NOT NULL)
-        ");
+            DB::statement("
+                ALTER TABLE agendamentos
+                ADD CONSTRAINT agendamentos_cliente_check
+                CHECK (
+                    cliente_id IS NOT NULL OR
+                    cliente_nome IS NOT NULL
+                )
+            ");
+        }
     }
 
     public function down(): void

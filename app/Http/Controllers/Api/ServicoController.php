@@ -66,7 +66,7 @@ class ServicoController extends Controller
 
     /**
      * "Deletar" (Desativar) um serviço.
-     * Recomendo desativar em vez de deletar para não quebrar o histórico de agendamentos.
+     * Preferimos desativar em vez de deletar para não quebrar o histórico de agendamentos.
      */
     public function destroy(Request $request, $id)
     {

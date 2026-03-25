@@ -47,4 +47,14 @@ return [
         'credentials' => env('FIREBASE_CREDENTIALS'),
     ],
 
+    'apple' => [
+        'client_id' => env('APPLE_CLIENT_ID'),
+        'team_id' => env('APPLE_TEAM_ID'),
+        'key_id' => env('APPLE_KEY_ID'),
+        'redirect' => env('APPLE_REDIRECT_URI'),
+        
+        // Mudamos de storage_path ou /etc para a variável direta
+        'private_key' => env('APPLE_PRIVATE_KEY'), 
+    ],
+
 ];

@@ -323,6 +323,119 @@ class AuthController extends Controller
         return response()->json(['redirect_url' => $url]);
     }
 
+    /**
+     * Autenticação via Apple (Login ou Registro automático).
+     */
+    public function loginApple(Request $request)
+    {
+        $request->validate([
+            'identityToken' => 'required|string',
+            'device_name'   => 'required|string',
+            'name'          => 'nullable|string', // Nome enviado pelo Flutter no 1º login
+            'tipo'          => 'nullable|in:cliente,profissional,estabelecimento',
+            
+            // Campos para o caso de ser um novo Estabelecimento
+            'nome_estabelecimento' => 'required_if:tipo,estabelecimento|string|max:255',
+            'endereco'             => 'required_if:tipo,estabelecimento|string',
+            'ramo'                 => 'nullable|in:beleza,saude,terapia,outros',
+            
+            // Campo para o caso de ser um novo Profissional
+            'estabelecimento_id'   => 'required_if:tipo,profissional|exists:estabelecimentos,id',
+        ]);
+
+        try {
+            // O Socialite usa o identityToken para validar e extrair os dados
+            $appleUser = \Laravel\Socialite\Facades\Socialite::driver('apple')
+                ->stateless()
+                ->userFromToken($request->identityToken);
+
+            return DB::transaction(function () use ($appleUser, $request) {
+                // 1. Verificar se o usuário já existe (pelo apple_id ou e-mail)
+                $user = User::where('apple_id', $appleUser->id)
+                    ->orWhere('email', $appleUser->email)
+                    ->first();
+
+                $isNewUser = false;
+
+                if (!$user) {
+                    $isNewUser = true;
+                    $tipo = $request->tipo ?? 'cliente';
+
+                    // IMPORTANTE: A Apple só manda o nome no 1º login. 
+                    // Se o Flutter pegou o nome lá, ele deve nos enviar via request.
+                    $userName = $request->name ?? ($appleUser->name ?? $appleUser->email);
+
+                    $user = User::create([
+                        'name'              => $userName,
+                        'email'             => $appleUser->email,
+                        'apple_id'          => $appleUser->id,
+                        'password'          => null,
+                        'tipo'              => ($tipo === 'estabelecimento') ? 'profissional' : $tipo,
+                        'ativo'             => ($tipo === 'cliente'),
+                        'email_verified_at' => now(),
+                    ]);
+
+                    // Configuração de lembrete padrão (igual ao seu registro normal)
+                    UserLembreteConfig::create([
+                        'user_id' => $user->id,
+                        'minutos_antes' => 1440,
+                    ]);
+                    
+                    if ($request->tipo === 'estabelecimento') {
+                        $estabelecimento = Estabelecimento::create([
+                            'nome' => $request->nome_estabelecimento,
+                            'endereco' => $request->endereco,
+                            'identificador' => Str::slug($request->nome_estabelecimento) . '-' . Str::random(5),
+                            'ramo' => $request->ramo ?? 'outros',
+                        ]);
+
+                        $user->update([
+                            'estabelecimento_id' => $estabelecimento->id,
+                            'is_admin_estabelecimento' => true,
+                        ]);
+
+                        Mail::to('juliosilvaguilherme1@gmail.com')->send(new NovoEstabelecimentoAguardando($user, $estabelecimento));
+                    }
+
+                    // Se for profissional, dispara o e-mail de solicitação de vínculo
+                    if ($request->tipo === 'profissional' && $request->estabelecimento_id) {
+                        $user->update(['estabelecimento_id' => $request->estabelecimento_id]);
+                        $dono = $user->estabelecimento->dono;
+                        if ($dono) {
+                            Mail::to($dono->email)->send(new SolicitacaoVinculoProfissional($user, $user->estabelecimento));
+                        }
+                    }
+                    
+                } else {
+                    // Se o usuário já existia mas não tinha o apple_id vinculado
+                    if (!$user->apple_id) {
+                        $user->update(['apple_id' => $appleUser->id]);
+                    }
+                }
+
+                // 2. Gerar Token do Sanctum
+                $token = $user->createToken($request->device_name)->plainTextToken;
+
+                return response()->json([
+                    'token' => $token,
+                    'user' => [
+                        'id'    => $user->id,
+                        'name'  => $user->name,
+                        'email' => $user->email,
+                        'tipo'  => $user->tipo,
+                        'ativo' => $user->ativo,
+                    ],
+                    'is_new_user' => $isNewUser,
+                    'mensagem'    => $isNewUser ? 'Bem-vindo ao Agendo!' : 'Login realizado.'
+                ]);
+            });
+
+        } catch (\Exception $e) {
+            Log::error('Erro Apple Login: ' . $e->getMessage());
+            return response()->json(['message' => 'Erro ao autenticar com Apple.'], 500);
+        }
+    }
+
     public function salvarToken(Request $request)
     {
         // 1. Validação básica

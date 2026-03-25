@@ -26,7 +26,8 @@ class User extends Authenticatable
         'estabelecimento_id',
         'is_admin_estabelecimento',
         'foto_path',
-        'fcm_token'
+        'fcm_token',
+        'apple_id',
     ];
 
 
@@ -37,6 +38,7 @@ class User extends Authenticatable
         'password',
         'remember_token',
         'google_id',  
+        'apple_id',
     ];
 
     /**
