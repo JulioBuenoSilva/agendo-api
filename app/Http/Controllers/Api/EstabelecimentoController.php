@@ -82,7 +82,8 @@ class EstabelecimentoController extends Controller
                 'estabelecimentos.ramo',
                 'estabelecimentos.foto_path'
             )
-            ->orderByDesc('ultimo_agendamento');
+//            ->orderByDesc('ultimo_agendamento');
+            ->orderByRaw('ultimo_agendamento DESC NULLS LAST');
         } else {
             $query->orderBy('estabelecimentos.nome');
         }
