@@ -24,4 +24,4 @@ Route::get('/confirmar-profissional/{id}', function ($id) {
 })->name('web.confirmar.profissional');
 
 Route::get('/support', [SupportController::class, 'index'])->name('support.index');
-Route::post('/support', [SupportController::class, 'send'])->name('support.send');
+Route::post('/support', [SupportController::class, 'store'])->name('support.store');
