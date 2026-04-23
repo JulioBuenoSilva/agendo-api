@@ -18,7 +18,7 @@ class SupportController extends Controller
         $faqs = [
             [
                 'question' => 'Como criar uma conta como profissional?',
-                'answer' => 'Na tela de login, clique em "Não tem uma conta? Cadastre-se" Então, no topo da página, selecione "Pro" se você for um funcionário de um estabelecimento cadastrado ou "Dono" se você estiver querendo cadastrar seu estabelecimento. Após preencher os campos, você deverá aguardar a aprovação da sua conta, que normalmente leva de 1 a 3 dias úteis .'
+                'answer' => 'Na tela de login, clique em "Não tem uma conta? Cadastre-se". Então, no topo da página, selecione "Pro" se você for um funcionário de um estabelecimento cadastrado ou "Dono" se você estiver querendo cadastrar seu estabelecimento. Após preencher os campos, você deverá aguardar a aprovação da sua conta, que normalmente leva de 1 a 3 dias úteis .'
             ],
             [
                 'question' => 'Como realizar um agendamento?',
@@ -53,7 +53,7 @@ class SupportController extends Controller
         try {
             // Envio direto via Raw para não precisar criar classes extras agora
             Mail::raw("Nome: {$validated['name']}\nEmail: {$validated['email']}\n\nMensagem:\n{$validated['message']}", function ($message) use ($validated) {
-                $message->to('seu-email@exemplo.com') // <--- COLOQUE SEU E-MAIL AQUI
+                $message->to('juliosilvaguilherme1@gmail.com') // <--- COLOQUE SEU E-MAIL AQUI
                         ->subject("SUPORTE APP: " . $validated['subject'])
                         ->from(config('mail.from.address'), config('mail.from.name'))
                         ->replyTo($validated['email'], $validated['name']);
