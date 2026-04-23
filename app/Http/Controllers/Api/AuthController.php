@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Password;
 use Carbon\Carbon;
 use App\Mail\ResetPasswordMail;
 use Illuminate\Support\Facades\Mail;
+use App\Http\Controllers\Controller;
 
 class AuthController extends Controller
 {

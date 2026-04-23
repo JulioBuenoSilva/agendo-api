@@ -1,7 +1,6 @@
 <?php 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Api\Controller;
 use Illuminate\Http\Request;
 use Intervention\Image\Laravel\Facades\Image;
 use Illuminate\Support\Facades\Storage;
@@ -11,6 +10,7 @@ use App\Models\Agendamento;
 use App\Models\BloqueioAgenda;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
 
 class PerfilController extends Controller {
         

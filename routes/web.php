@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Web\SupportController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -21,3 +22,6 @@ Route::get('/confirmar-profissional/{id}', function ($id) {
         'titulo' => 'Confirmando Profissional...'
     ]);
 })->name('web.confirmar.profissional');
+
+Route::get('/support', [SupportController::class, 'index'])->name('support.index');
+Route::post('/support', [SupportController::class, 'send'])->name('support.send');

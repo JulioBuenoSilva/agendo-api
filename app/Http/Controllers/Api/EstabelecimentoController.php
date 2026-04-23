@@ -8,6 +8,7 @@ use Intervention\Image\Laravel\Facades\Image;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 
 class EstabelecimentoController extends Controller
 {   
@@ -82,7 +83,6 @@ class EstabelecimentoController extends Controller
                 'estabelecimentos.ramo',
                 'estabelecimentos.foto_path'
             )
-//            ->orderByDesc('ultimo_agendamento');
             ->orderByRaw('ultimo_agendamento DESC NULLS LAST');
         } else {
             $query->orderBy('estabelecimentos.nome');

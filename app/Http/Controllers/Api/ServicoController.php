@@ -1,11 +1,11 @@
 <?php 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Api\Controller;
 use App\Models\Servico;
 use Illuminate\Http\Request;
 use Intervention\Image\Laravel\Facades\Image;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Controllers\Controller;
 
 class ServicoController extends Controller
 {

@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Api\Controller;
 use App\Models\UserLembreteConfig;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 
 class UserLembreteConfigController extends Controller
 {
