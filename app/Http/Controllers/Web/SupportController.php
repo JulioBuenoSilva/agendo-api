@@ -34,7 +34,7 @@ class SupportController extends Controller
             ]
         ];
 
-        return view('support.index', compact('faqs'));
+        return view('pages.support.index', compact('faqs'));
     }
 
     /**
