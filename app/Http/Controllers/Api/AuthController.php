@@ -110,8 +110,11 @@ class AuthController extends Controller
                     'password' => Hash::make($request->password),
                     'telefone' => $request->telefone,
                     'tipo'     => ($request->tipo === 'estabelecimento') ? 'profissional' : $request->tipo,
-                    // Apenas cliente nasce ativo. Profissional e Estabelecimento dependem de aprovação.
-                    'ativo'    => ($request->tipo === 'cliente'),
+                    // Anteriormente, apenas clientes nasceriam ativos. Profissionais e Estabelecimentos dependeriam de aprovação. 
+                    // Atualmente, todos os usuários já serão criados ativos. Mais tarde o ADM pode inativar se quiser.
+                    // Futuramente, é improvável que voltemos à lógica anterior pois a apple rejeitaria.
+                    // 'ativo'    => ($request->tipo === 'cliente'),
+                    'ativo'    => true,
                     'estabelecimento_id' => $request->estabelecimento_id ?? null,
                 ]);
 
