@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider; // ServiceProvider padrão
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Event;
 use SocialiteProviders\Manager\SocialiteWasCalled;
 use SocialiteProviders\Apple\AppleExtendSocialite;
@@ -22,6 +23,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (config('app.env') === 'production') {
+            URL::forceScheme('https');
+        }
         // No Laravel 11, registramos o listener do Socialite assim:
         Event::listen(
             SocialiteWasCalled::class,
