@@ -3,9 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Web\SupportController;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Route::get('/', function () {
+//     return view('welcome');
+// });
 
 // Rota para o Admin aprovar o Estabelecimento
 Route::get('/aprovar-estabelecimento/{id}', function ($id) {
