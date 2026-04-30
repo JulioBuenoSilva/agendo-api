@@ -492,7 +492,7 @@ class AuthController extends Controller
         }
 
         // Geramos um token único
-        $token = Str::random(60);
+        $token = random_int(100000, 999999);
 
         // Inserimos na tabela nativa do Laravel
         DB::table('password_reset_tokens')->updateOrInsert(
@@ -510,7 +510,7 @@ class AuthController extends Controller
         Mail::to($user->email)->send(new ResetPasswordMail($token));
 
         return response()->json([
-            'message' => 'Link de recuperação enviado para o seu e-mail.',
+            'message' => 'Código de recuperação enviado para o seu e-mail.',
             // 'token_debug' => $token // APENAS para teste, remova em produção!
         ]);
     }
@@ -538,7 +538,7 @@ class AuthController extends Controller
         }
 
         // Verifica se o token expirou (ex: 1 hora)
-        if (Carbon::parse($resetData->created_at)->addMinutes(60)->isPast()) {
+        if (Carbon::parse($resetData->created_at)->addMinutes(10)->isPast()) {
             return response()->json(['message' => 'Token expirado.'], 400);
         }
 
