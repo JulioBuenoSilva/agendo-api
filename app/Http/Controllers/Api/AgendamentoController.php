@@ -27,13 +27,16 @@ class AgendamentoController extends Controller
         $request->validate([
             'servico_id'      => 'required|exists:servicos,id',
             'data'            => 'required|date_format:Y-m-d',
+            'profissional_id' => 'required|exists:users,id',
         ]);
+
+        $clienteId = $request->user() ? $request->user()->id : null;
 
         $horarios = $this->service->buscarHorariosLivres(
             $request->profissional_id,
             $request->servico_id,
             $request->data,
-            $request->user()->id
+            $clienteId
         );
 
         return response()->json($horarios);
