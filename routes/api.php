@@ -22,6 +22,7 @@ Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::post('/auth/google', [AuthController::class, 'loginGoogle']);
 Route::get('/auth/google/redirect', [AuthController::class, 'redirectToGoogle']);
 
+// Lista todos os serviços de um estabelecimento
 Route::get('/servicos', [ServicoController::class, 'index']);
 
 // Buscar estabelecimento por nome ou por ramo
@@ -30,6 +31,13 @@ Route::get('/estabelecimentos/explorar', [EstabelecimentoController::class, 'exp
 // Detalhes completos do estabelecimento
 Route::get('/estabelecimentos/{id}/detalhes', [EstabelecimentoController::class, 'detalhesCompletos']);
 Route::get('/estabelecimento/{id}/foto', [EstabelecimentoController::class, 'getFotoEstabelecimento']);
+
+// Ver horários de funcionamento do estabeleciemtno
+Route::get('/horarios-funcionamento', [HorarioFuncionamentoController::class, 'index']);
+
+
+// Checar disponibilidade de um profissional (aqui é que filtra com no-show)
+Route::get('/agendamentos/disponibilidade', [AgendamentoController::class, 'horariosDisponiveis']);
 
 // Rotas protegidas (Só entra com Token Bearer)
 Route::middleware('auth:sanctum')->group(function () {
@@ -68,9 +76,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/user/lembrete-config', [UserLembreteConfigController::class, 'destroy']);
 
     // --- AGENDAMENTOS (CLIENTE/GERAL) ---
-    
-    // Checar disponibilidade 
-    Route::get('/agendamentos/disponibilidade', [AgendamentoController::class, 'horariosDisponiveis']);
 
     // Fazer novo agendamento 
     Route::post('/agendamentos', [AgendamentoController::class, 'store']);
@@ -83,9 +88,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Método para clientes e profissionais verem seus agendamentos
     Route::get('/agendamentos/consultar-agenda', [AgendamentoController::class, 'minhaAgenda']);
-
-    // Ver horários de funcionamento do estabeleciemtno
-    Route::get('/horarios-funcionamento', [HorarioFuncionamentoController::class, 'index']);
 
     // --- GESTÃO DO PROFISSIONAL ---
     
