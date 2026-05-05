@@ -17,16 +17,17 @@ class SolicitacaoVinculoProfissional extends Mailable
     use Queueable, SerializesModels;
 
     public User $user;
-    public Estabelecimento $estabelecimento;    
+    public Estabelecimento $estabelecimento;
+    public $codigo;    
     
     /**
      * Create a new message instance.
      */
-    public function __construct(User $user, Estabelecimento $estabelecimento)
+    public function __construct(User $user, Estabelecimento $estabelecimento, $codigo)
     {
         $this->user = $user;
         $this->estabelecimento = $estabelecimento;
-    
+        $this->codigo = $codigo;
     }
 
     /**
@@ -49,7 +50,7 @@ class SolicitacaoVinculoProfissional extends Mailable
             with: [
                 'profissionalNome' => $this->user->name,
                 'emailProfissional' => $this->user->email,
-                'linkAprovacao' => route('web.confirmar.profissional', ['id' => $this->user->id])
+                'codigoAprovacao' => $this->codigo,
             ],
         );
     }

@@ -111,10 +111,10 @@ class AuthController extends Controller
                     'telefone' => $request->telefone,
                     'tipo'     => ($request->tipo === 'estabelecimento') ? 'profissional' : $request->tipo,
                     // Anteriormente, apenas clientes nasceriam ativos. Profissionais e Estabelecimentos dependeriam de aprovação. 
-                    // Atualmente, todos os usuários já serão criados ativos. Mais tarde o ADM pode inativar se quiser.
+                    // Atualmente, clientes e estabelecimentos nascem ativos, mas profissionais precisam ser aprovados pelo dono do estabelecimento.
                     // Futuramente, é improvável que voltemos à lógica anterior pois a apple rejeitaria.
                     // 'ativo'    => ($request->tipo === 'cliente'),
-                    'ativo'    => true,
+                    'ativo'    => ($request->tipo === 'cliente' || $request->tipo === 'estabelecimento'),
                     'estabelecimento_id' => $request->estabelecimento_id ?? null,
                 ]);
 
@@ -146,9 +146,22 @@ class AuthController extends Controller
                 }
 
                 if ($request->tipo === 'profissional') {
+                    $codigo = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+                    DB::table('vinculo_codigos')->updateOrInsert(
+                        ['user_id' => $user->id],
+                        [
+                            'estabelecimento_id' => $request->estabelecimento_id,
+                            'codigo' => $codigo,
+                            'expires_at' => now()->addHours(3), // Expira em 3h
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]
+                    );
+
                     $dono = $user->estabelecimento->dono;
                     
-                    Mail::to($dono->email)->send(new SolicitacaoVinculoProfissional($user, $user->estabelecimento));
+                    Mail::to($dono->email)->send(new SolicitacaoVinculoProfissional($user, $user->estabelecimento, $codigo));
                 }
 
                 // 3. Gerar Token (Opcional, mas útil para clientes que já entram ativos)

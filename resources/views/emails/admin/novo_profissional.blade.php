@@ -24,13 +24,12 @@
             </p>
         </div>
 
-        @isset($linkAprovacao)
-            <p>Você reconhece este profissional? Clique abaixo para confirmar:</p>
+        @isset($codigoAprovacao)
+            <p>Você reconhece este profissional? Envie a ele o código abaixo para confirmar:</p>
 
-            <a href="{{ $linkAprovacao }}"
-               style="display: inline-block; padding: 12px 25px; background-color: #27ae60; color: #fff; text-decoration: none; border-radius: 5px; font-weight: bold;">
-                Confirmar Profissional
-            </a>
+            <div style="background-color: #e3f2fd; padding: 15px; border-left: 5px solid #2196f3; margin: 20px 0; text-align: center;">
+                <span style="font-size: 1.5em; font-weight: bold; color: #2196f3;">{{ $codigoAprovacao }}</span>
+            </div>
         @endisset
 
         <p style="font-size: 0.8em; color: #777; margin-top: 30px;">
