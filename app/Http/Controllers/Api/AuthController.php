@@ -46,12 +46,12 @@ class AuthController extends Controller
             ], 401);
         }
 
-        if (! $user->ativo) {
-            return response()->json([
-                'code' => 'USER_INACTIVE',
-                'message' => 'Conta ainda não aprovada, por favor, aguarde.'
-            ], 403);
-        }
+        // if (! $user->ativo) {
+        //     return response()->json([
+        //         'code' => 'USER_INACTIVE',
+        //         'message' => 'Conta ainda não aprovada, por favor, aguarde.'
+        //     ], 403);
+        // }
 
 
         // Criamos o token e retornamos para o Flutter
