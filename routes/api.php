@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\HorarioFuncionamentoController;
 use App\Http\Controllers\Api\UserLembreteConfigController;
 use App\Http\Controllers\Api\PerfilController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\AprovacaoController;
 
 // Rotas públicas
 Route::post('/register', [AuthController::class, 'register']);
@@ -35,12 +36,13 @@ Route::get('/estabelecimento/{id}/foto', [EstabelecimentoController::class, 'get
 // Ver horários de funcionamento do estabeleciemtno
 Route::get('/horarios-funcionamento', [HorarioFuncionamentoController::class, 'index']);
 
-
 // Checar disponibilidade de um profissional (aqui é que filtra com no-show)
 Route::get('/agendamentos/disponibilidade', [AgendamentoController::class, 'horariosDisponiveis']);
 
 // Rotas protegidas (Só entra com Token Bearer)
 Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/vincularViaCodigo', [AprovacaoController::class, 'vincularViaCodigo']);
+
     Route::post('/dispositivo/token', [AuthController::class, 'salvarToken']);
     
     Route::get('/notifications', [NotificationController::class, 'index']);
