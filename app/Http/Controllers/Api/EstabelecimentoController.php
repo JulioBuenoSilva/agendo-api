@@ -200,7 +200,7 @@ class EstabelecimentoController extends Controller
         }
 
         $estabelecimento = Estabelecimento::findOrFail($user->estabelecimento_id);
-        dd($estabelecimento);
+        
         // 2. Persistência
         try {
             // inverte o valor
