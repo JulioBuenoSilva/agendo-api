@@ -201,6 +201,11 @@ class EstabelecimentoController extends Controller
 
         $estabelecimento = Estabelecimento::findOrFail($user->estabelecimento_id);
 
+        return response()->json([
+                'message' => 'Configuração de no-show atualizada com sucesso.',
+                'permite_noshow' => (bool) $estabelecimento->permite_noshow
+            ]);
+
         // 2. Persistência
         try {
             // inverte o valor
