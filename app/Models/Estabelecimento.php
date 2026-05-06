@@ -14,7 +14,8 @@ class Estabelecimento extends Model
         'endereco',
         'ramo', 
         'fuso_horario',
-        'foto_path'
+        'foto_path',
+        'permite_noshow',
     ];
 
     /**
