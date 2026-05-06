@@ -205,7 +205,7 @@ class EstabelecimentoController extends Controller
         try {
             // inverte o valor
             $estabelecimento->update([
-                'permite_noshow' => (!$estabelecimento->permite_noshow)
+                'permite_noshow' => ($estabelecimento->permite_noshow ? false : true)
             ]);
 
             return response()->json([
