@@ -15,9 +15,12 @@ class Estabelecimento extends Model
         'ramo', 
         'fuso_horario',
         'foto_path',
-        'permite_noshow',
+        'permite_noshow'
     ];
 
+    protected $casts = [
+        'permite_noshow' => 'boolean',
+    ];
     /**
      * Acessors adicionais para o modelo.
      */
