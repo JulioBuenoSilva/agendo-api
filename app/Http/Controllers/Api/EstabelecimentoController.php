@@ -118,6 +118,7 @@ class EstabelecimentoController extends Controller
             'id' => $estabelecimento->id,
             'nome' => $estabelecimento->nome,
             'identificador' => $estabelecimento->identificador,
+            'permite_noshow' => $estabelecimento->permite_noshow,
             'endereco' => $estabelecimento->endereco,
             'ramo' => $estabelecimento->ramo,
             'fuso_horario' => $estabelecimento->fuso_horario,
@@ -186,36 +187,36 @@ class EstabelecimentoController extends Controller
      */
     public function updateNoShow(Request $request)
     {
-
         $user = $request->user();
 
-        // 1. Garantia de integridade: O usuário só altera o estabelecimento ao qual pertence.
-        // Presumimos que o modelo User tenha 'estabelecimento_id'. 
-        // Se for um sistema multi-estabelecimento por dono, a lógica mudaria para uma relação HasMany.
-        if (!$user->estabelecimento_id) {
-            return response()->json(['message' => 'Usuário não possui estabelecimento vinculado.'], 403);
-        }
-        if (!$user->is_admin_estabelecimento) {
+        // Validação de segurança
+        if (!$user->estabelecimento_id || !$user->is_admin_estabelecimento) {
             return response()->json(['message' => 'Acesso negado.'], 403);
         }
 
-        $estabelecimento = Estabelecimento::findOrFail($user->estabelecimento_id);
-        
-        // 2. Persistência
+        // Validação de contrato: obrigue o envio do valor desejado
+        $request->validate([
+            'permite_noshow' => 'required|boolean'
+        ]);
+
         try {
-            // inverte o valor
-            $estabelecimento->update([
-                'permite_noshow' => ($estabelecimento->permite_noshow ? false : true)
-            ]);
+            $estabelecimento = Estabelecimento::findOrFail($user->estabelecimento_id);
+            
+            // Atribuição direta e save()
+            $estabelecimento->permite_noshow = $request->permite_noshow;
+            $estabelecimento->save();
+
+            // Opcional: force o refresh para garantir que lerá o que está no banco
+            // $estabelecimento->refresh(); 
 
             return response()->json([
-                'message' => 'Configuração de no-show atualizada com sucesso.',
+                'message' => 'Configuração atualizada com sucesso.',
                 'permite_noshow' => (bool) $estabelecimento->permite_noshow
             ]);
             
         } catch (\Exception $e) {
-            Log::error("Erro ao atualizar no-show: " . $e->getMessage());
-            return response()->json(['message' => 'Erro interno ao salvar configuração.'], 500);
+            Log::error("Erro Atlas - Falha ao atualizar no-show: " . $e->getMessage());
+            return response()->json(['message' => 'Erro interno ao salvar.'], 500);
         }
     }
 }
