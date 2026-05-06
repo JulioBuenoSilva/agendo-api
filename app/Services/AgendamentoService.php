@@ -74,79 +74,93 @@ class AgendamentoService
      */
     public function buscarHorariosLivres($profissionalId, $servicoId, $data, $clienteId = null)
     {
-        $servico = Servico::findOrFail($servicoId);
-        $duracao = $servico->duracao_minutos;
-
-        $profissional = User::with('estabelecimento.horariosFuncionamento')
+        // 1. Eager Loading preventivo. 
+        // Precisamos do estabelecimento para checar a flag 'permite_noshow'.
+        $profissional = User::with(['estabelecimento.horariosFuncionamento'])
             ->where('tipo', 'profissional')
             ->findOrFail($profissionalId);
 
+        $estabelecimento = $profissional->estabelecimento;
+        $servico = Servico::findOrFail($servicoId);
+        $duracao = $servico->duracao_minutos;
+
+        // 2. Lógica de No-Show: Decidimos se calculamos o risco ou não.
+        // Se permite_noshow for FALSE, o array de risco fica vazio e o filtro é ignorado.
+        $janelasRisco = [];
+        if ($estabelecimento->permite_noshow && $clienteId) {
+            $janelasRisco = $this->obterJanelasDeAltaTaxaDeFalta($clienteId);
+        }
+
         $diaSemana = Carbon::parse($data)->dayOfWeek;
-        
-        $turnos = $profissional->estabelecimento->horariosFuncionamento
-            ->where('dia_semana', $diaSemana);
+        $turnos = $estabelecimento->horariosFuncionamento->where('dia_semana', $diaSemana);
 
         if ($turnos->isEmpty()) return [];
 
-        $janelasRisco = ($clienteId) ? $this->obterJanelasDeAltaTaxaDeFalta($clienteId) : [];
-
+        // 3. Otimização de busca de ocupação
         $agendados = Agendamento::where('profissional_id', $profissionalId)
             ->whereDate('inicio_horario', $data)
             ->where('status', '!=', 'cancelado')
-            ->orderBy('inicio_horario', 'asc')
             ->get(['inicio_horario', 'fim_horario']);
 
         $bloqueios = DB::table('bloqueios_agenda')
-            ->where(function($query) use ($profissionalId, $profissional) {
+            ->where(function($query) use ($profissionalId, $estabelecimento) {
                 $query->where('profissional_id', $profissionalId)
-                    ->orWhere(function($q) use ($profissional) {
+                    ->orWhere(function($q) use ($estabelecimento) {
                         $q->whereNull('profissional_id')
-                            ->where('estabelecimento_id', $profissional->estabelecimento_id);
+                        ->where('estabelecimento_id', $estabelecimento->id);
                     });
             })
             ->whereDate('inicio', '<=', $data)
             ->whereDate('fim', '>=', $data)
             ->get(['inicio', 'fim']);
 
-        $todosPeriodosOcupados = $agendados->concat($bloqueios);
+        // Transformamos para Carbon uma única vez antes do loop para evitar overhead
+        $periodosOcupados = $agendados->map(fn($i) => [
+            'inicio' => Carbon::parse($i->inicio_horario),
+            'fim' => Carbon::parse($i->fim_horario)
+        ])->concat($bloqueios->map(fn($i) => [
+            'inicio' => Carbon::parse($i->inicio),
+            'fim' => Carbon::parse($i->fim)
+        ]));
 
         $slotsDisponiveis = [];
         $step = 15; 
+        $hoje = Carbon::now();
 
         foreach ($turnos as $turno) {
             $ponteiro = Carbon::parse($data . ' ' . $turno->hora_abertura);
             $limiteTurno = Carbon::parse($data . ' ' . $turno->hora_fechamento);
 
-            while ((clone $ponteiro)->addMinutes($duracao) <= $limiteTurno) {
-                $inicioSlot = clone $ponteiro;
-                $fimSlot = (clone $ponteiro)->addMinutes($duracao);
+            while ($ponteiro->copy()->addMinutes($duracao) <= $limiteTurno) {
+                $inicioSlot = $ponteiro->copy();
+                $fimSlot = $ponteiro->copy()->addMinutes($duracao);
                 
-                // Se o slot começa antes ou exatamente agora, pula para o próximo
-                if ($inicioSlot->isPast()) {
+                // Validação de horário passado
+                if ($inicioSlot->lessThanOrEqualTo($hoje)) {
                     $ponteiro->addMinutes($step);
                     continue;
                 }
-
-                // 1. Verifica No-Show (USANDO A VARIAVEL CALCULADA FORA DO LOOP)
-                $estaEmJanelaDeRisco = false;
-                foreach ($janelasRisco as $janela) {
-                    if ($inicioSlot->hour >= $janela['hora_inicio'] && 
-                        $inicioSlot->hour < $janela['hora_fim']) {
-                        $estaEmJanelaDeRisco = true;
-                        break;
+                
+                // 4. Verificação de Janela de Risco (Short-circuit)
+                $bloqueadoPorRisco = false;
+                if (!empty($janelasRisco)) {
+                    foreach ($janelasRisco as $janela) {
+                        if ($inicioSlot->hour >= $janela['hora_inicio'] && 
+                            $inicioSlot->hour < $janela['hora_fim']) {
+                            $bloqueadoPorRisco = true;
+                            break;
+                        }
                     }
-                } 
+                }
 
-                if ($estaEmJanelaDeRisco) {
+                if ($bloqueadoPorRisco) {
                     $ponteiro->addMinutes($step);
                     continue;
                 }
 
-                // 2. Verifica colisão
-                $conflito = $todosPeriodosOcupados->contains(function ($item) use ($inicioSlot, $fimSlot) {
-                    $inicioOcupado = Carbon::parse($item->inicio_horario ?? $item->inicio);
-                    $fimOcupado = Carbon::parse($item->fim_horario ?? $item->fim);
-                    return $inicioSlot < $fimOcupado && $fimSlot > $inicioOcupado;
+                // 5. Verificação de conflito
+                $conflito = $periodosOcupados->contains(function ($ocupado) use ($inicioSlot, $fimSlot) {
+                    return $inicioSlot < $ocupado['fim'] && $fimSlot > $ocupado['inicio'];
                 });
                 
                 if (!$conflito) {
@@ -159,7 +173,6 @@ class AgendamentoService
 
         return $slotsDisponiveis;
     }
-
 
     // Busca os horários nos quais o cliente costuma faltar ou cancelar em cima da hora
     private function obterJanelasDeAltaTaxaDeFalta($clienteId)

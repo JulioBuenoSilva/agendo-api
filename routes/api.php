@@ -120,6 +120,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/servicos/upload-foto', [ServicoController::class, 'uploadFoto']);
 
             Route::post('/estabelecimento/upload-foto', [EstabelecimentoController::class, 'uploadFoto']);
+
+            Route::patch('/estabelecimento/configuracoes/no-show', [EstabelecimentoController::class, 'updateNoShow']);
         
         });
         
