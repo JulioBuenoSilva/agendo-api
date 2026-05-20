@@ -124,7 +124,7 @@ class AgendamentoService
         ]));
 
         $slotsDisponiveis = [];
-        $step = 15; 
+        $step = 30; 
         $hoje = Carbon::now();
 
         foreach ($turnos as $turno) {
