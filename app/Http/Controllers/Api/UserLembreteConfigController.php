@@ -43,25 +43,27 @@ class UserLembreteConfigController extends Controller
         $user = $request->user();
 
         $request->validate([
-            'lembretes' => 'required|array|min:1',
+            'lembretes' => 'present|array',
             'lembretes.*.minutos_antes' => 'required|integer|min:1|max:10080',
         ]);
 
-        $user->lembretes()->delete();
+        $lembretesCriados = \DB::transaction(function () use ($user, $request) {
+            $user->lembretes()->delete();
 
-        $lembretesCriados = [];
-
-        foreach ($request->lembretes as $l) {
-
-            $lembretesCriados[] = $user->lembretes()->create([
-                'minutos_antes' => $l['minutos_antes'],
-            ]);
-        }
+            $criados = [];
+            // Se o array vier vazio, o foreach não roda e o banco apenas fica limpo
+            foreach ($request->lembretes as $l) {
+                $criados[] = $user->lembretes()->create([
+                    'minutos_antes' => $l['minutos_antes'],
+                ]);
+            }
+            return $criados;
+        });
 
         return response()->json([
             'message' => 'Configuração salva com sucesso.',
             'lembretes' => $lembretesCriados
-        ], 201);
+        ], 200);
     }
 
     /**
